@@ -74,13 +74,15 @@ double ElkanKMeans<MetricType, MatType>::Iterate(const arma::mat& centroids,
       clusterDistances(j, i) = distance;
     }
   }
-
+  int numThreads = 4;
   // Now find the closest cluster to each other cluster.  We multiply by 0.5 so
   // that this is equivalent to s(c) for each cluster c.
   minClusterDistances = 0.5 * arma::min(clusterDistances).t();
 
+  omp_set_num_threads(numThreads);
+  #pragma omp parallel for shared(assignments)
   // Now loop over all points, and see which ones need to be updated.
-  for (size_t i = 0; i < dataset.n_cols; ++i)
+  for (omp_size_t i = 0; i < (omp_size_t)dataset.n_cols; ++i)
   {
     // Step 2: identify all points such that u(x) <= s(c(x)).
     if (upperBounds(i) <= minClusterDistances(assignments[i]))
